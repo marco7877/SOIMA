@@ -11,6 +11,7 @@ def main():
     import numpy as np
     import matplotlib.pyplot as plt
     import pandas as pd
+    import os
     def most_common(lst, n):# sirve para plotear, busca más cumun
         if len(lst) == 0: return -1
     #print(lst)
@@ -126,14 +127,14 @@ def main():
         for i in range(len(stimuli1)):
             winner1=winner_modalnode(stimuli1[i], SOM1, side1)
             winner2=winner_modalnode(stimuli2[i], SOM2, side2)
-            row_1hebb=dict1rows[winner1]
-            row_2hebb=dict2rows[winner2]
+            row_1hebb=dict1rows[winner1]#hebbian conections
+            row_2hebb=dict2rows[winner2]#hebbian conections
             multimodalstimuli=winnerNodesArray(winner1,winner2,side1,side2)
             activation_map=np.zeros(shape=(int(sidemmr),int(sidemmr)),dtype=float)
-            ind1=hebbian1[row_1hebb]
-            ind2=hebbian2[row_2hebb]
+            ind1=hebbian1[row_1hebb]#crossmodal activation SOM1
+            ind2=hebbian2[row_2hebb]#crossmodal activation SOM2
             ind=np.vstack((ind1,ind2))
-            ind=np.sum(ind,axis=0)
+            ind=np.sum(ind,axis=0)#learned multimodal from crossmodal
             ind=normalizearray(ind)
             counter=0
             for r in range(int(sidemmr)):
@@ -216,7 +217,7 @@ def main():
         plt.show()
                     
     def plotpiechart(ocurrencesMap,side,labelslist):
-        label=np.zeros((int(side),int(side),5),dtype=int)
+        label=np.zeros((int(side),int(side),10),dtype=int)
         for i in range(int(side)):
             for j in range(int(side)):
                 data=ocurrencesMap[i][j]
@@ -229,7 +230,7 @@ def main():
                     counti[0]=100
                     uniqu=[0]
                     count=[0]
-                array=np.zeros(5,dtype=float)
+                array=np.zeros(10,dtype=float)
                 for e in range(len(uniqu)):
                     indx=count[e]
                     #print(indx)
@@ -277,10 +278,21 @@ def main():
                     lab="Da"
                 elif label==4:
                     lab="McGurk"
+                elif label==5:
+                    lab="BaGa"
+                elif label==6:
+                    lab="BaDa"
+                elif label==7:
+                    lab="GaDa"
+                elif label==8:
+                    lab="DaBa"
+                elif label==9:
+                    lab="DaGa"
                 else:
                     print("label "+str(label)+" is not recognized")
                     lab=label
-                plt.imshow(activationmap,cmap="hot")
+                #fig= plt.figure(figsize=(15,15))
+                plt.imshow(activationmap,cmap="rainbow")
                 plt.tight_layout()
                 plt.colorbar()
                 plt.title(title+" activation map for "+str(lab)+" label")
@@ -289,25 +301,33 @@ def main():
             activationdictionary[lab]=activationmap
         activationdictionary=pd.DataFrame.from_dict(activationdictionary,orient="index")
         if plot==True:
+            #fig= plt.figure(figsize=(15,15))
             pltlabels=activationdictionary.index.values.tolist()
             plt.plot(activationdictionary)
             plt.ylabel("Activation per neuron")
             plt.xlabel("Syllable")
             plt.title(title+" activation behavior")
             plt.show()
-            plt.imshow(activationdictionary,aspect='auto',vmin=0,vmax=1)
-            plt.title(title+" activation patterns")
+            actdictarr=activationdictionary.values
+            #actdictarr=actdictarr[:3][:]#
+            #pltlabels=pltlabels[:3]#
+            plt.imshow(actdictarr,cmap="rainbow",aspect='auto',vmin=0,vmax=1)
+            #plt.title(title)
             plt.colorbar()
             plt.yticks(np.arange(len(pltlabels)), pltlabels)
+            plt.ylabel("Stimuli class")
+            plt.tight_layout()
             plt.show()
-            x=np.corrcoef(activationdictionary)
-            plt.imshow(x,cmap="plasma",vmin=-1,vmax=1)
+            x=np.corrcoef(actdictarr)
+            #fig= plt.figure(figsize=(10,10))
+            plt.imshow(x,cmap="plasma",vmin=0,vmax=1)
             for i in range(len(pltlabels)):
                 for j in range(len(pltlabels)):
-                    text = plt.text(j, i, round(x[i, j],2), ha="center", va="center", color="w")
+                    text = plt.text(j, i, round(x[i, j],2), ha="center", va="center", color="k")
             plt.xticks(np.arange(len(pltlabels)), pltlabels)
+            plt.xticks(rotation=90)
             plt.yticks(np.arange(len(pltlabels)), pltlabels)
-            plt.title(title+" activation correlations")
+            plt.title(title)#correlations title
             plt.colorbar()
             plt.tight_layout()
             plt.show()
@@ -318,6 +338,8 @@ def main():
     def testArquitechture2(SOM1,SOM2,side1,side2,sidemmr,MMR,hebbian1,hebbian2,stimuli1,stimuli2,
                           dict1rows,dict2rows,labels,title,plot=True):
         activationdictionary={}
+        crossmodaldictionary1={}
+        crossmodaldictionary2={}
         labelslist=list(np.unique(labels))
         for label in labelslist:
             mask=labels==label
@@ -331,15 +353,17 @@ def main():
             for i in range(len(stimuli1masked)):
                 winner1=winner_modalnode(stimuli1masked[i], SOM1, side1)
                 winner2=winner_modalnode(stimuli2masked[i], SOM2, side2)
-                row_1hebb=dict1rows[winner1]
-                row_2hebb=dict2rows[winner2]
+                row_1hebb=dict1rows[winner1]#hebbian conection
+                row_2hebb=dict2rows[winner2]#hebbian conection
                 multimodalstimuli=winnerNodesArray(winner1,winner2,side1,side2)
                 activation_map=np.zeros(shape=(int(sidemmr),int(sidemmr)),dtype=float)
-                ind1=hebbian1[row_1hebb]
-                ind2=hebbian2[row_2hebb]
+                ind1=hebbian1[row_1hebb]#Crossmodal SOM1
+                crossmodal1=normalizearray(ind1)
+                ind2=hebbian2[row_2hebb]#Crossmodal SOM2
+                crossmodal2=normalizearray(ind2)
                 ind=np.vstack((ind1,ind2))
                 ind=np.sum(ind,axis=0)
-                ind=normalizearray(ind)
+                ind=normalizearray(ind)#Multimodal learned
                 counter=0
                 actmapping=np.empty((int(sidemmr),int(sidemmr)),dtype=float)
                 for r in range(int(sidemmr)):
@@ -350,17 +374,6 @@ def main():
                 indirectactivation=np.reshape(ind,(int(sidemmr),int(sidemmr)))
                 activation=actmapping+indirectactivation
                 activation=normalizearray(activation)
-                if count==0:
-                    activationresult=activation
-                    count+=1
-                else:
-                    activationresult+=activation
-                result=np.where(activation==np.amax(activation))
-                x=int(result[0])
-                y=int(result[1])
-                mapping[x][y].append(label)
-            activationresult=normalizearray(activationresult)
-            if plot==True:
                 if label==1:
                     lab="Ba"
                 elif label ==2:
@@ -369,36 +382,150 @@ def main():
                     lab="Da"
                 elif label==4:
                     lab="McGurk"
+                elif label==5:
+                    lab="BaGa"
+                elif label==6:
+                    lab="BaDa"
+                elif label==7:
+                    lab="GaDa"
+                elif label==8:
+                    lab="DaBa"
+                elif label==9:
+                    lab="DaGa"
+                if videofiles==True:
+                    outputpath="./"+lab+"/"
+                    if not os.path.exists(outputpath):
+                        os.makedirs(outputpath)
+
+                    name=outputpath+"fig{0:04d}.png"
+                    fig= plt.figure(figsize=(5,5))
+                    plt.imshow(activation,cmap="rainbow")
+                    fig.tight_layout()
+                    fig.savefig(name.format(count),dpi=100)
+
+                if count==0:
+                    activationresult=activation
+                    crossmodalresult1=crossmodal1
+                    crossmodalresult2=crossmodal2
+                    count+=1
+                    
+                else:
+                    count+=1
+                    activationresult+=activation
+                    crossmodalresult1+=crossmodalresult1
+                    crossmodalresult2+=crossmodalresult2
+                result=np.where(activation==np.amax(activation))
+                x=int(result[0])
+                y=int(result[1])
+                mapping[x][y].append(label)
+            crossmodalresult1=np.reshape(crossmodalresult1,(int(sidemmr),int(sidemmr)))
+            crossmodalresult1=normalizearray(crossmodalresult1)
+            crossmodalresult2=np.reshape(crossmodalresult2,(int(sidemmr),int(sidemmr)))
+            crossmodalresult2=normalizearray(crossmodalresult2)
+            activationresult=normalizearray(activationresult)
+            if plot==True:
+                if label==1:
+                    lab="BaBa"
+                    crosslab1="-Ba"
+                    crosslab2="Ba-"
+                    print("Ploting crossmodal activations")
+                    fig=plt.figure(figsize=(10,10))
+                    plt.imshow(crossmodalresult1,cmap="rainbow")
+                    plt.tight_layout()
+                    plt.colorbar()
+                    plt.title("Crossmodal activation map for "+str(crosslab1))
+                    plt.show()
+                    fig=plt.figure(figsize=(10,10))
+                    plt.imshow(crossmodalresult2,cmap="rainbow")
+                    plt.tight_layout()
+                    plt.colorbar()
+                    plt.title("Crossmodal activation map for "+str(crosslab2))
+                elif label ==2:
+                    lab="GaGa"
+                    crosslab1="-Ga"
+                    crosslab2="Ga-"
+                    print("Ploting crossmodal activations")
+                    fig=plt.figure(figsize=(10,10))
+                    plt.imshow(crossmodalresult1,cmap="rainbow")
+                    plt.tight_layout()
+                    plt.colorbar()
+                    plt.title(title+" crossmodal activation map for "+str(crosslab1))
+                    plt.show()
+                    fig=plt.figure(figsize=(10,10))
+                    plt.imshow(crossmodalresult2,cmap="rainbow")
+                    plt.tight_layout()
+                    plt.colorbar()
+                    plt.title(title+" crossmodal activation map for "+str(crosslab2))
+                elif label==3:
+                    lab="DaDa"
+                    crosslab1="-Da"
+                    crosslab2="Da-"
+                    print("Ploting crossmodal activations")
+                    fig=plt.figure(figsize=(10,10))
+                    plt.imshow(crossmodalresult1,cmap="rainbow")
+                    plt.tight_layout()
+                    plt.colorbar()
+                    plt.title(title+" crossmodal activation map for "+str(crosslab1))
+                    plt.show()
+                    fig=plt.figure(figsize=(10,10))
+                    plt.imshow(crossmodalresult2,cmap="rainbow")
+                    plt.tight_layout()
+                    plt.colorbar()
+                    plt.title(title+" crossmodal activation map for "+str(crosslab2))
+                elif label==4:
+                    lab="McGurk"
+                elif label==5:
+                    lab="BaGa"
+                elif label==6:
+                    lab="BaDa"
+                elif label==7:
+                    lab="GaDa"
+                elif label==8:
+                    lab="DaBa"
+                elif label==9:
+                    lab="DaGa"
                 else:
                     print("label "+str(label)+" is not recognized")
                     lab=label
-                plt.imshow(activationresult,cmap="hot")
+                fig= plt.figure(figsize=(10,10))
+                plt.imshow(activationresult,cmap="rainbow")
                 plt.tight_layout()
                 plt.colorbar()
                 plt.title(title+" activation map for "+str(lab)+" label")
                 plt.show()
+            #if label<4:
+                #activationdictionary[crosslab1]=list(np.reshape(crossmodalresult1,(int(sidemmr*int(sidemmr)))))
+                #activationdictionary[crosslab2]=list(np.reshape(crossmodalresult2,(int(sidemmr*int(sidemmr)))))
             activationdictionary[lab]=list(np.reshape(activationresult,(int(sidemmr)*int(sidemmr))))
         activationdictionary=pd.DataFrame.from_dict(activationdictionary,orient="index")
         if plot==True:
             pltlabels=activationdictionary.index.values.tolist()
+            fig= plt.figure(figsize=(10,10))
             plt.plot(activationdictionary)
             plt.ylabel("Activation per neuron")
             plt.xlabel("Syllable")
             plt.title(title+"activation behavior")
             plt.show()
-            plt.imshow(activationdictionary,aspect='auto',vmin=0,vmax=1)
+            actdictarr=activationdictionary.values
+            #actdictarr=actdictarr[:3][:]#
+            #pltlabels=pltlabels[:3]#
+            plt.imshow(actdictarr,cmap="rainbow",aspect='auto',vmin=0,vmax=1)
             plt.yticks(np.arange(len(pltlabels)), pltlabels)
-            plt.title(title+" activation patterns")
+            #plt.title(title)
+            plt.tight_layout()
+            plt.ylabel("Stimuli class")
             plt.colorbar()
             plt.show()
-            x=np.corrcoef(activationdictionary)
-            plt.imshow(x,cmap="plasma",vmin=-1,vmax=1)
+            x=np.corrcoef(actdictarr)
+            fig= plt.figure(figsize=(10,10))
+            plt.imshow(x,cmap="rainbow",vmin=-1,vmax=1)
             for i in range(len(pltlabels)):
                 for j in range(len(pltlabels)):
-                    text = plt.text(j, i, round(x[i, j],2), ha="center", va="center", color="w")
+                    text = plt.text(j, i, round(x[i, j],2), ha="center", va="center", color="k")
             plt.xticks(np.arange(len(pltlabels)), pltlabels)
+            plt.xticks(rotation=90)
             plt.yticks(np.arange(len(pltlabels)), pltlabels)
-            plt.title(title+" activation correlations")
+            #plt.title(title)#correlations
             plt.colorbar()
             plt.tight_layout()
             plt.show()
@@ -408,6 +535,7 @@ def main():
 
     #############################-MAIN-########################################
     #---------charging SOMS-------------------#
+    videofiles=False
     print("Charging SOMS")
     MFCCfile="/media/marco/MarcoHDD/github/SOIMA/SOIMA_alpha0.3_20Steps/6613MFCCSOM_0.3alpha_20steps.csv"
     Lipfile="/media/marco/MarcoHDD/github/SOIMA/SOIMA_alpha0.3_20Steps/6620LipReadingSOM_0.3alpha_20steps.csv"
@@ -424,8 +552,8 @@ def main():
     #--------charging training and testing stimuli#
     sound_train= "/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/badaga_sound_train.csv"
     image_train="/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/badaga_train.csv"
-    sound_test="/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/badaga_sound_test.csv"
-    image_test="/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/badaga_test.csv"
+    sound_test="/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/complete_sound_test.csv"
+    image_test="/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/complete_image_test.csv"
     sound_traindata,sound_trainlabels=charge_files(sound_train)
     image_traindata,image_trainlabels=charge_files(image_train)
     sound_testdata,sound_testlabels=charge_files(sound_test)
@@ -442,13 +570,13 @@ def main():
                                        Hebb_MFCC_MMR,
                                        Hebb_LipRead_MMR,sound_traindata,
                                        image_traindata,lip_mmr_rows,
-                                       mfcc_mmr_rows,image_trainlabels,"Train MMR")
+                                       mfcc_mmr_rows,image_trainlabels,"MMR training set")
     _,dict_testSOIMA=testArquitechture2(MFCC,LipReading,mfcc_side,
                                        lipreading_side,mmr_side,MMR,
                                        Hebb_MFCC_MMR,
                                        Hebb_LipRead_MMR,sound_testdata,
                                        image_testdata,lip_mmr_rows,
-                                       mfcc_mmr_rows,image_testlabels,"Test MMR")
+                                       mfcc_mmr_rows,image_testlabels,"MMR testing set")
     TD_trainSOIMA=testArquitechture(MFCC,LipReading,mfcc_side,
                                        lipreading_side,mmr_side,MMR,
                                        Hebb_MFCC_MMR,
@@ -463,7 +591,7 @@ def main():
                                        mfcc_mmr_rows,image_testlabels)
     print("plotting SOM-node piechart for training")
     plotpiechart(TD_trainSOIMA, mmr_side, [0,1,2,3])
-    plotpiechart(TD_testSOIMA, mmr_side, [0,1,2,3,4])
+    plotpiechart(TD_testSOIMA, mmr_side, [0,1,2,3,4,5,6,7,8,9])
     mfcc_mapping_tr=mappingSOM(MFCC, sound_traindata, sound_trainlabels, mfcc_side)
     lipreading_mapping_tr=mappingSOM(LipReading, image_traindata,
                                      image_trainlabels, lipreading_side)
@@ -474,13 +602,48 @@ def main():
     umatrix(LipReading,lipreading_side,"U-matrix for LipReading")    
     umatrix(MFCC,mfcc_side,"U-matrix for Syllable")
     print("calculating activation matrixes for modal congruent stimuli")
-    sound_trainactivation=activationMatrix(MFCC,mfcc_side,sound_traindata,sound_trainlabels,"Sound train",plot=True)
-    sound_testactivation=activationMatrix(MFCC,mfcc_side,sound_testdata,sound_testlabels,"Soud test",plot=True)
-    image_trainactivation=activationMatrix(LipReading,lipreading_side,image_traindata,image_trainlabels,"Image train",plot=True)
-    image_testactivation=activationMatrix(LipReading,lipreading_side,image_testdata,image_testlabels,"Image test",plot=True)
+    sound_trainactivation=activationMatrix(MFCC,mfcc_side,sound_traindata,sound_trainlabels,"Auditory training set",plot=True)
+    sound_testactivation=activationMatrix(MFCC,mfcc_side,sound_testdata,sound_testlabels,"Auditory testing set",plot=True)
+    image_trainactivation=activationMatrix(LipReading,lipreading_side,image_traindata,image_trainlabels,"Visual training set",plot=True)
+    image_testactivation=activationMatrix(LipReading,lipreading_side,image_testdata,image_testlabels,"Visual testing set",plot=True)
     
     
     
 main()
+"""
+ MFCC_confussionmatrix=testSOM(MFCC, sound_traindata, sound_trainlabels, 
+                                  sound_traindata, sound_trainlabels, mfcc_side)
+    LipReading_confussionmatrix=testSOM(LipReading, image_traindata, 
+                                        image_trainlabels,
+                                        image_traindata, 
+                                        image_trainlabels, lipreading_side)
 
-                
+Ba=dict_testSOIMA.loc["Ba",:]
+Da=dict_testSOIMA.loc["Da",:]
+Ga=dict_testSOIMA.loc["Ga",:]
+Mc=dict_testSOIMA.loc["McGurk",:]
+Ba=np.array(Ba)
+Da=np.array(Da)
+Ga=np.array(Ga)
+Mc=np.array(Mc)
+def prob(x):
+    n=sum(x)
+    for i in range(len(x)):
+        x[i]=x[i]/n
+    return x
+bap=prob(Ba)
+dap=prob(Da)
+gap=prob(Ga)
+mcp=prob(Mc)
+bap=bap+0.001
+dap=dap+0.001
+gap=gap+0.001
+mcp=mcp+0.001
+def cross_entropy(p, q):
+	return -sum([p[i]*np.log2(q[i]) for i in range(len(p))])
+
+print(cross_entropy(bap, mcp))
+print(cross_entropy(dap, mcp))
+print(cross_entropy(gap, gap))
+print(cross_entropy(mcp, mcp))
+"""
