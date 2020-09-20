@@ -14,13 +14,13 @@ Created on Wed May  6 11:53:02 2020
 # Marco A. Flores-Coronado, Universidad Autónoma del Estado de Morelos (UAEM)
 # 2020
 #
-# This code trains a Self-Organizing Map (SOM);after being trained, weights may
-# be saved as .txt
+# This code trains a Self-Organizing Internal Model Architecture (SOIMA);
+# after being trained, weights may be saved as .txt
 # To plot the SOM, this script search for the winner nodes for each element from
 # the training element (normalized in range 0:1), then it determines which type
 # of data such node stands for by the most common element (label) identified with
 # such node. Thus, que plotting still works for testing data.
-#hennian learning only works for joining squared modal and amodal soms
+#***hebbianian learning only works for joining squared modal and amodal soms***
 #################### libraries #######################
 import datetime
 inicio=datetime.datetime.now()
@@ -108,7 +108,7 @@ def eucl (r1,c1,r2,c2):
     eud=sqrt(sum( (n1 - n2)**2 for n1, n2 in zip(n1, n2)))
     return eud
 
-def most_common(lst, n):# sirve para plotear, busca más cumun
+def most_common(lst, n):# sirve para plotear, busca más cumún
     if len(lst) == 0: return -1
     #print(lst)
     counts = np.zeros(shape=n+1, dtype=np.int)
@@ -176,20 +176,20 @@ def plot_mmr(SOM,imageName):
     plt.colorbar()
     plt.show()
 
-def saveMap (Map,Rows,Cols,Dim,LearnMax,StepsMax,modality,outputpath):
+def saveMap (Map,Rows,Cols,Dim,LearnMax,StepsMax,modality,outputpath,model):
     data=[]
     for i in range(Cols):
         for j in range(Rows):
             datito=Map[i][j]
             data.append(datito)
-    docname=str(Rows)+str(Cols)+str(Dim)+modality+"SOM_"+str(LearnMax)+"alpha_"+str(StepsMax)+"steps.csv"
+    docname=str(Rows)+str(Cols)+str(Dim)+modality+"SOM_"+str(LearnMax)+"alpha_"+str(StepsMax)+"steps"+"_model"+(model)+".csv"
     path=outputpath+"/"+docname
     np.savetxt(path,data,delimiter=",")
     inf=[int(Rows),int(Cols),int(Dim)]
     np.savetxt((outputpath+modality+"guide"),inf,delimiter=",")
     
-def savehebbian (hebbianmatrix,modality,outputpath,LearnMax,StepsMax):
-    docname=modality+"HebbianConections_"+str(LearnMax)+"alpha_"+str(StepsMax)+"steps.csv"
+def savehebbian (hebbianmatrix,modality,outputpath,LearnMax,StepsMax,mod):
+    docname=modality+"HebbianConections_"+str(LearnMax)+"alpha_"+str(StepsMax)+"steps_mod"+mod+".csv"
     path=outputpath+"/"+docname
     np.savetxt(path,hebbianmatrix,delimiter=",")
     x,y=hebbianmatrix.shape
@@ -198,7 +198,9 @@ def savehebbian (hebbianmatrix,modality,outputpath,LearnMax,StepsMax):
 # ==================================================================
 
 def main():
-    print("charging data")
+    
+    model="0"
+    print("charging data for model version: "+model)
     Dim1 = 13# dimensiones del vector de entrada
     Rows1 = 6; Cols1 = 6#  tmaño m*n del SOM
     Dim2 = 20# dimensiones del vector de entrada
@@ -210,7 +212,7 @@ def main():
     RangeMax3 = eucl(0,0,Rows3,Cols3)# cantidad de nodos, AKA= area
     LearnMax = 0.3# learning rate
     StepsMax = 10000#cantidad de permutaciones de entrenamiento
-    originalvaluesdoc="6*6_SOM_sound_10000_alfa3_badaga_original"
+    originalvaluesdoc="6*6_SOM_sound_10000_alfa3_badaga_original"+"model"+model
     
     outputpath="./SOIMA_alpha"+str(LearnMax)+"_"+str(StepsMax)+"Steps/"
     savetext=True #T for saving final SOM weights
@@ -218,8 +220,8 @@ def main():
     saveinitial=True
 
     print("We're woking. With some luck, you won't fuck this shit up")
-    data_file1 = "/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/badaga_sound_train.csv"
-    data_file2 ="/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/badaga_train.csv"
+    data_file1 = "/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/audiotrain"+model+".csv"
+    data_file2 ="/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/videotrain"+model+".csv"
     data_1 = np.loadtxt(data_file1, delimiter=",", usecols=range(0,Dim1),
     dtype=np.floating)# vector por sujeto
     data_2 = np.loadtxt(data_file2, delimiter=",", usecols=range(0,Dim2),
@@ -280,58 +282,11 @@ def main():
         import os
         if not os.path.exists(outputpath):
             os.mkdir(outputpath)
-        saveMap(map1, Rows1, Cols1, Dim1, LearnMax, StepsMax, "MFCC", outputpath)
-        saveMap(map2, Rows2, Cols2, Dim2, LearnMax, StepsMax, "LipReading", outputpath)
-        saveMap(map3, Rows3, Cols3, Dim3, LearnMax, StepsMax, "MMR", outputpath)
-        savehebbian(hebbMatrix1, "MFCC-MMR", outputpath, LearnMax, StepsMax)
-        savehebbian(hebbMatrix2, "LipReading-MMR", outputpath, LearnMax, StepsMax)
+        saveMap(map1, Rows1, Cols1, Dim1, LearnMax, StepsMax, "MFCC", outputpath,model)
+        saveMap(map2, Rows2, Cols2, Dim2, LearnMax, StepsMax, "LipReading", outputpath,model)
+        saveMap(map3, Rows3, Cols3, Dim3, LearnMax, StepsMax, "MMR", outputpath,model)
+        savehebbian(hebbMatrix1, "MFCC-MMR", outputpath, LearnMax, StepsMax,model)
+        savehebbian(hebbMatrix2, "LipReading-MMR", outputpath, LearnMax, StepsMax,model)
         
 if __name__=="__main__":
     main()
-
-   
-"""
-    def charge_som(som_text):
-        area,dim=som_text.shape
-        lado=np.sqrt(area)
-        som=np.empty(shape=(int(lado),int(lado),int(dim)),dtype=float)
-        index=0
-        for i in range(int(lado)):
-            for j in range(int(lado)):
-                som[i][j]=np.array(som_text[index])
-                index+=1
-        return som,dim,lado
-    Rows,Cols,Dim=6,6,20
-    data_file = "/media/marco/MarcoHDD/github/stimuli/output_centralTendencies/output_StimulifromMultivariate/badaga_train.csv"
-    data_x = np.loadtxt(data_file, delimiter=",", usecols=range(0,Dim),
-                        dtype=np.floating)# vector por sujeto
-    data_y = np.loadtxt(data_file, delimiter=",", usecols=(Dim),
-                        dtype=np.float)# labels
-    data_y=data_y.astype('int')
-    data_file = "/media/marco/MarcoHDD/github/SOM/SOMoutput/SOM_6-6_20000__alfa3_badaga.csv"
-    data_som = np.loadtxt(data_file, delimiter=",",dtype=np.floating)
-    map,_,_=charge_som(data_som)
-    mapping = np.empty(shape=(Rows,Cols), dtype=object)
-    for i in range(Rows):
-        for j in range(Cols):
-            mapping[i][j] = []
-    for t in range(len(data_x)):
-        (m_row, m_col) = closest_node(data_x, t, map, Rows, Cols)
-        #print(m_row, m_col)
-        mapping[m_row][m_col].append(data_y[t])
-    label_map = np.zeros(shape=(Rows,Cols), dtype=np.int)
-  
-    for i in range(Rows):
-        for j in range(Cols):
-            elements=mapping[i][j]
-            elements=list(elements)
-            ocurr=elements.count(1)
-            label_map[i][j] = ocurr
-    #np.savetxt('test_gapdf_pymc3.csv',label_map,delimiter=",")
-    print("And now, this is where fun beggins")
-    plt.imshow(label_map, cmap=plt.cm.get_cmap('binary',25))
-    plt.title("SOM_6-6_20000__alfa3_ga(test)")
-    plt.colorbar()
-    plt.show()
-    
-"""
